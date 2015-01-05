@@ -92,6 +92,9 @@ function getNodeName($destination, $type = '') {
         case 'Extension':
             $destination = $destination['extension'];
             break;
+        case 'Announcement':
+            $destination = sprintf('app-announcement-%s,s', $destination['announcement_id']);
+            break;
         case 'destination':
             $parts = explode(',', $destination);
             if ($parts[0] == 'app-blackhole') {
@@ -199,6 +202,18 @@ function createExtensionNode($extension) {
     }
     return sprintf('label="{ %s }" shape="record"', implode(' | ', $lines));
 }
+function createAnnouncementNode($announcement)
+{
+    global $mysqli;
+    $query = $mysqli->query(sprintf("SELECT * FROM recordings WHERE id = %d", $announcement['recording_id']));
+    $name = '';
+    while ($row = $query->fetch_array(MYSQLI_ASSOC)) {
+        $name = $row['displayname'];
+    }
+    return sprintf('label="{ <in> Announcement - %s | Recording: %s }" shape="record"',
+        $announcement['description'],
+        $name);
+}
 
 function createNode($data, $type, $nodeName) {
     $ret = null;
@@ -223,6 +238,9 @@ function createNode($data, $type, $nodeName) {
             break;
         case 'Extension':
             $ret = createExtensionNode($data);
+            break;
+        case 'Announcement':
+            $ret = createAnnouncementNode($data);
             break;
     }
     return $ret;
@@ -262,7 +280,7 @@ buildNodesFromQuery("SELECT * FROM ivr_details", 'IVR', array('timeout_destinati
 buildNodesFromQuery("SELECT * FROM ringgroups", 'RingGroup', 'postdest');
 buildNodesFromQuery("SELECT * FROM daynight WHERE dmode = 'fc_description'", 'DayNight', array());
 buildNodesFromQuery(sprintf("SELECT * FROM users WHERE extension in (%s)", implode(',', $extensionsToCreate)), 'Extension', array());
-
+buildNodesFromQuery("SELECT * FROM announcement", 'Announcement', 'post_dest');
 ?>
 
 <html>
