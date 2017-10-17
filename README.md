@@ -9,7 +9,7 @@ To install..
 
 ```bash
 pushd /var/www/html/
-git clone https://github.com/mattsoftware.com/FreePBXRouteGraph/ graph
+git clone https://github.com/mattsoftware/FreePBXRouteGraph.git graph
 popd
 vim /etc/freepbx_graph_config.php
 ```
