@@ -297,8 +297,24 @@ digraph G {
     ];
 
     <?php foreach ($nodes as $name => $node) : ?>
+        <?php
+            $found = $name === "START";
+            foreach ($edges as $edge) {
+                if (is_array($edge[1])) {
+                    if ($edge[1][0] == $name) {
+                        $found = true;
+                        break;
+                    }
+                }
+                else if ($edge[1] == $name) {
+                    $found = true;
+                    break;
+                }
+            }
+        ?>
         "<?php echo $name;?>" [
             <?php echo $node; ?>
+            <?php echo !$found ? ' style=filled fillcolor=red ' : ''; ?>
         ];
     <?php endforeach; ?>
     <?php foreach ($edges as $edge) : ?>
