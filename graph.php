@@ -95,6 +95,9 @@ function getNodeName($destination, $type = '') {
         case 'Announcement':
             $destination = sprintf('app-announcement-%s,s', $destination['announcement_id']);
             break;
+        case 'Queue':
+            $destination = sprintf('ext-queues,%s', $destination['extension']);
+            break;
         case 'destination':
             $parts = explode(',', $destination);
             if ($parts[0] == 'app-blackhole') {
@@ -145,7 +148,7 @@ function createIvrNode($ivr, $nodeName) {
     while ($row = $query->fetch_array()) {
         $destinations[] = sprintf('<%s> %s', "ivr".$row['selection'], $row['selection']);
         $edges[] = array(
-            array($nodeName, "ivr".$row['selection']), 
+            array($nodeName, "ivr".$row['selection']),
             getNodeName($row['dest'], 'destination'),
         );
     }
@@ -181,8 +184,8 @@ function createDayNightNode($daynight, $nodeName) {
         array($nodeName, 'night'),
         getNodeName($daynight['night'], 'destination'),
     );
-    return sprintf('label="{ <in> Flow Control - %s (%s) | { <day> %s | <night> %s } }" shape="record"', 
-        $daynight['fc_description'], 
+    return sprintf('label="{ <in> Flow Control - %s (%s) | { <day> %s | <night> %s } }" shape="record"',
+        $daynight['fc_description'],
         $daynight['featurecode'],
         'day',
         'night');
@@ -214,6 +217,11 @@ function createAnnouncementNode($announcement)
         $announcement['description'],
         $name);
 }
+function createQueueNode ($queue)
+{
+    return sprintf('label="{ Queue - %s }" shape="record"',
+        $queue['descr']);
+}
 
 function createNode($data, $type, $nodeName) {
     $ret = null;
@@ -241,6 +249,9 @@ function createNode($data, $type, $nodeName) {
             break;
         case 'Announcement':
             $ret = createAnnouncementNode($data);
+            break;
+        case 'Queue':
+            $ret = createQueueNode($data);
             break;
     }
     return $ret;
@@ -281,6 +292,7 @@ buildNodesFromQuery("SELECT * FROM ringgroups", 'RingGroup', 'postdest');
 buildNodesFromQuery("SELECT * FROM daynight WHERE dmode = 'fc_description'", 'DayNight', array());
 buildNodesFromQuery(sprintf("SELECT * FROM users WHERE extension in (%s)", implode(',', $extensionsToCreate)), 'Extension', array());
 buildNodesFromQuery("SELECT * FROM announcement", 'Announcement', 'post_dest');
+buildNodesFromQuery("SELECT * FROM queues_config", 'Queue', 'dest');
 ?>
 
 <html>
