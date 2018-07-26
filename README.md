@@ -27,3 +27,22 @@ This password may be found by running the following command on the FreePBX box..
 ```bash
 cat /etc/amportal.conf | grep AMPDBPASS
 ```
+
+Development Notes
+=================
+
+Adding new items
+----------------
+
+* Add the buildNodesFromQuery
+  * First agument is the sql query to get the list of items to add
+  * Second argument is the name to give the nodes we are importing
+  * Third argument is the column to get the destination from
+
+* Create a new function which will take the data from the mysql query (single row) and turn it into a graphviz node
+
+* In the createNode function, add a case with the new name
+  * This should call the new function to return the specific graphviz node
+
+* In the getNodeName function, add a case with the new name to build the freepbx well-known name for the node
+
