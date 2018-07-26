@@ -98,6 +98,9 @@ function getNodeName($destination, $type = '') {
         case 'Queue':
             $destination = sprintf('ext-queues,%s', $destination['extension']);
             break;
+        case 'Miscellaneous Destination':
+            $destination = sprintf('ext-miscdests,%s', $destination['id']);
+            break;
         case 'destination':
             $parts = explode(',', $destination);
             if ($parts[0] == 'app-blackhole') {
@@ -107,7 +110,7 @@ function getNodeName($destination, $type = '') {
             }
             else if (substr($parts[0], 0, 4) == 'ivr-') {
                 $destination = $parts[0];
-            }   
+            }
             else if (substr($parts[0], 0, 9) == 'ext-local' && substr($parts[1], 0, 2) == 'vm') {
                 $extensionsToCreate[] = substr($parts[1], 3);
                 $destination = sprintf('%s', substr($parts[1], 3));
@@ -222,6 +225,11 @@ function createQueueNode ($queue)
     return sprintf('label="{ Queue - %s }" shape="record"',
         $queue['descr']);
 }
+function createMiscellaneousDestinationNode($data)
+{
+    return sprintf('label="{ Miscellaneous Destination - %s }" shape="record"',
+        $data['description']);
+}
 
 function createNode($data, $type, $nodeName) {
     $ret = null;
@@ -252,6 +260,9 @@ function createNode($data, $type, $nodeName) {
             break;
         case 'Queue':
             $ret = createQueueNode($data);
+            break;
+        case 'Miscellaneous Destination':
+            $ret = createMiscellaneousDestinationNode($data);
             break;
     }
     return $ret;
@@ -293,6 +304,7 @@ buildNodesFromQuery("SELECT * FROM daynight WHERE dmode = 'fc_description'", 'Da
 buildNodesFromQuery(sprintf("SELECT * FROM users WHERE extension in (%s)", implode(',', $extensionsToCreate)), 'Extension', array());
 buildNodesFromQuery("SELECT * FROM announcement", 'Announcement', 'post_dest');
 buildNodesFromQuery("SELECT * FROM queues_config", 'Queue', 'dest');
+buildNodesFromQuery("SELECT * FROM miscdests", 'Miscellaneous Destination', 'destdial');
 ?>
 
 <html>
