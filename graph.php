@@ -115,8 +115,12 @@ function getNodeName($destination, $type = '') {
                 $extensionsToCreate[] = substr($parts[1], 3);
                 $destination = sprintf('%s', substr($parts[1], 3));
             }
-            else if ($parts[0] == 'from-did-direct' || $parts[0] == 'ext-fax') {
+            else if ($parts[0] == 'from-did-direct') {
                 $destination = $parts[1];
+                $extensionsToCreate[] = $destination;
+            }
+            else if ($parts[0] == 'ext-fax') {
+                $destination = getExtensionFromUser($parts[1]);
                 $extensionsToCreate[] = $destination;
             }
             else {
@@ -200,10 +204,10 @@ function createExtensionNode($extension) {
         $lines[] = '<vmu> VM Unavailable';
         $lines[] = '<vmb> VM Busy';
     }
-    $query = $mysqli->query(sprintf("SELECT * FROM fax_users WHERE user = '%s'", $extension['extension']));
+    $query = $mysqli->query(sprintf("SELECT fu.*, u.default_extension FROM userman_users u join fax_users fu on fu.user = u.id WHERE u.default_extension = '%s'", $extension['extension']));
     while ($row = $query->fetch_array(MYSQLI_ASSOC)) {
         if ($row['faxenabled'] == 'true') {
-            $lines[] = '<fax> ' . $row['faxemail'];
+            $lines[] = '<fax> Fax: ' . $row['faxemail'];
         }
     }
     return sprintf('label="{ %s }" shape="record"', implode(' | ', $lines));
@@ -268,6 +272,16 @@ function createNode($data, $type, $nodeName) {
     return $ret;
 }
 
+function getExtensionFromUser($uid)
+{
+    global $mysqli;
+        $result = $mysqli->query(sprintf("SELECT * FROM userman_users WHERE id = %s", $uid));
+        while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
+                return $row['default_extension'];
+        }
+        return 0;
+}
+
 // BUILT-INS
 $nodes["START"] = createSimpleNode("START", 'octagon');
 
@@ -301,10 +315,10 @@ buildNodesFromQuery("SELECT * FROM timeconditions", 'TimeConditions', array('tru
 buildNodesFromQuery("SELECT * FROM ivr_details", 'IVR', array('timeout_destination', 'invalid_destination'));
 buildNodesFromQuery("SELECT * FROM ringgroups", 'RingGroup', 'postdest');
 buildNodesFromQuery("SELECT * FROM daynight WHERE dmode = 'fc_description'", 'DayNight', array());
-buildNodesFromQuery(sprintf("SELECT * FROM users WHERE extension in (%s)", implode(',', $extensionsToCreate)), 'Extension', array());
 buildNodesFromQuery("SELECT * FROM announcement", 'Announcement', 'post_dest');
 buildNodesFromQuery("SELECT * FROM queues_config", 'Queue', 'dest');
 buildNodesFromQuery("SELECT * FROM miscdests", 'Miscellaneous Destination', 'destdial');
+buildNodesFromQuery(sprintf("SELECT * FROM users WHERE extension in (%s)", implode(',', $extensionsToCreate)), 'Extension', array());
 ?>
 
 <html>
