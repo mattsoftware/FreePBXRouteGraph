@@ -133,8 +133,17 @@ function getNodeName($destination, $type = '') {
 function createSimpleNode($name, $shape = 'ellipse') {
     return sprintf('label="%s" shape="%s"', $name, $shape);
 }
-function createDidNode($did) {
-    return sprintf('label="{ <in> DID - %s | <cid> %s | <did> %s }" shape="record"', $did['description'], $did['cidnum'], $did['extension']);
+function createDidNode($did, $nodeName) {
+    global $edges;
+    $ports = array(sprintf('<out0> %s', $did['extension']));
+    if ($did['fax_destination']) {
+        $ports[] = '<fax> Fax';
+        $edges[] = array(
+            array($nodeName, "fax"),
+            getNodeName($did['fax_destination'], 'destination'),
+        );
+    }
+    return sprintf('label="{ <in> DID - %s | <cid> %s | { %s } }" shape="record"', $did['description'], $did['cidnum'], implode(' | ', $ports));
 }
 function createSetCidNode($setCid) {
     return sprintf('label="{ <in> Set Caller ID - %s | %s | %s }" shape="record"', $setCid['description'], dotescape($setCid['cid_name']), dotescape($setCid['cid_num']));
@@ -239,7 +248,7 @@ function createNode($data, $type, $nodeName) {
     $ret = null;
     switch ($type) {
         case 'DID':
-            $ret = createDidNode($data);
+            $ret = createDidNode($data, $nodeName);
             break;
         case 'SetCID':
             $ret = createSetCidNode($data);
@@ -309,7 +318,7 @@ function extraForDid($nodeName, $row, $type) {
     global $edges;
     $edges[] = array(getNodeName("START"), $nodeName);
 }
-buildNodesFromQuery("SELECT * FROM incoming;", 'DID', 'destination', 'extraForDid');
+buildNodesFromQuery("SELECT i.*, fi.destination fax_destination FROM incoming i LEFT JOIN fax_incoming fi ON i.extension = fi.extension;", 'DID', 'destination', 'extraForDid');
 buildNodesFromQuery("SELECT * FROM setcid", 'SetCID', 'dest');
 buildNodesFromQuery("SELECT * FROM timeconditions", 'TimeConditions', array('truegoto', 'falsegoto'));
 buildNodesFromQuery("SELECT * FROM ivr_details", 'IVR', array('timeout_destination', 'invalid_destination'));
